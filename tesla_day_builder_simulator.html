@@ -1,0 +1,962 @@
+
+<style>
+:root{
+  --font-sans: "Manrope", "Segoe UI", sans-serif;
+  --color-background-page:#0b1220;
+  --color-background-primary:#111a2b;
+  --color-background-secondary:#172235;
+  --color-background-tertiary:#1e2b43;
+  --color-background-info:rgba(88,166,255,0.18);
+  --color-background-danger:rgba(255,95,109,0.18);
+  --color-text-primary:#e6edf7;
+  --color-text-secondary:#b3c0d6;
+  --color-text-tertiary:#8696b0;
+  --color-text-info:#79b8ff;
+  --color-text-danger:#ff8f9a;
+  --color-border-primary:#2a3a56;
+  --color-border-secondary:#314567;
+  --color-border-tertiary:#243652;
+  --color-border-info:#3f6da8;
+  --border-radius-md:8px;
+  --border-radius-lg:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at -10% -30%, rgba(98,117,255,0.24), transparent 60%),
+    radial-gradient(1000px 500px at 100% 120%, rgba(20,198,155,0.16), transparent 60%),
+    var(--color-background-page);
+  color:var(--color-text-primary);
+  height:100vh;
+  overflow:hidden;
+}
+.app{
+  max-width:100vw;
+  margin:0 auto;
+  padding:0.6rem;
+  font-family:var(--font-sans);
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:0.5rem;
+}
+.topbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pack-row{display:flex;align-items:center;gap:6px}
+.pack-row label{font-size:11px;color:var(--color-text-secondary)}
+.pack-row input[type=number]{width:58px;font-size:12px;padding:3px 6px;border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)}
+.db-actions{display:flex;align-items:center;gap:4px}
+.db-status{font-size:10px;color:var(--color-text-tertiary)}
+.soc-warning-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,143,154,0.75);
+  background:rgba(255,95,109,0.14);
+  color:var(--color-text-danger);
+  font-size:10px;
+  white-space:nowrap;
+  animation:socPulse 1.2s ease-in-out infinite;
+}
+@keyframes socPulse{
+  0%{transform:scale(1); box-shadow:none;}
+  50%{transform:scale(1.02); box-shadow:0 0 0 4px rgba(255,143,154,0.10);}
+  100%{transform:scale(1); box-shadow:none;}
+}
+.session-card.soc-low{
+  border-color:rgba(255,143,154,0.95) !important;
+  box-shadow:
+    0 0 0 2px rgba(255,143,154,0.30),
+    0 0 22px rgba(255,95,109,0.22);
+}
+.snap-select{
+  font-size:9px;
+  padding:2px 5px;
+  border-radius:6px;
+  border:1px solid var(--color-border-secondary);
+  background:var(--color-background-secondary);
+  color:var(--color-text-primary);
+}
+.snap-input{
+  width:150px;
+  font-size:9px;
+  padding:2px 5px;
+  border-radius:6px;
+  border:1px solid var(--color-border-secondary);
+  background:var(--color-background-secondary);
+  color:var(--color-text-primary);
+}
+.week{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:6px;
+  min-height:0;
+  flex:1;
+}
+.day-col{
+  min-width:0;
+  background:linear-gradient(180deg,var(--color-background-secondary),#121e31);
+  border:1px solid var(--color-border-primary);
+  border-radius:var(--border-radius-lg);
+  padding:7px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-height:0;
+  box-shadow:0 4px 14px rgba(0,0,0,0.24);
+}
+.day-header{display:flex;align-items:center;justify-content:space-between}
+.day-header-actions{display:flex;align-items:center;gap:4px}
+.tiny-btn{
+  font-size:9px;
+  padding:2px 5px;
+  border:1px solid var(--color-border-secondary);
+  border-radius:6px;
+  background:transparent;
+  color:var(--color-text-secondary);
+  cursor:pointer;
+}
+.tiny-btn:hover{background:var(--color-background-tertiary);color:var(--color-text-primary)}
+.tiny-btn:disabled{opacity:0.45;cursor:not-allowed;filter:saturate(0.8)}
+.day-name{font-size:12px;font-weight:600;color:var(--color-text-primary)}
+.day-summary{font-size:10px;color:var(--color-text-secondary);font-weight:600}
+.batt-bar{height:5px;background:var(--color-background-primary);border-radius:3px;overflow:hidden;border:1px solid var(--color-border-tertiary);margin-bottom:2px}
+.batt-fill{height:100%;border-radius:3px;transition:width 0.2s}
+.batt-pcts{display:flex;justify-content:space-between;font-size:10px;color:var(--color-text-secondary);margin-bottom:2px}
+.sessions{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-height:46px; /* ensures drop target is visible even when empty */
+  overflow:auto;
+  padding-right:1px;
+}
+.session-card{background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px;position:relative}
+.session-card.dragging{opacity:0.55}
+.session-card.drop-slot{
+  border-color: rgba(121,184,255,0.95) !important;
+  box-shadow:
+    0 0 0 2px rgba(121,184,255,0.35),
+    0 0 20px rgba(121,184,255,0.22);
+}
+.session-card.is-disabled{opacity:0.45;filter:saturate(0.75)}
+.sessions.drop-active{
+  outline:none;
+  border:2px solid rgba(121,184,255,0.95);
+  background:rgba(121,184,255,0.07);
+  box-shadow:
+    0 0 0 4px rgba(121,184,255,0.12),
+    0 0 18px rgba(121,184,255,0.25);
+  border-radius:8px;
+}
+.day-col.is-disabled{opacity:0.58}
+.session-card.type-charge{border-left:2px solid #1D9E75;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0}
+.session-card.type-drive{border-left:2px solid #E24B4A;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0}
+.session-card.type-cop{border-left:2px solid #BA7517;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0}
+.session-card.type-idle{border-left:2px solid #4ea1ff;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0}
+.session-card.type-setpct{border-left:2px solid #b47cff;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0}
+.session-type-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px}
+.type-charge .session-type-label{color:#0F6E56}
+.type-drive .session-type-label{color:#993C1D}
+.type-cop .session-type-label{color:#854F0B}
+.type-idle .session-type-label{color:#79b8ff}
+.type-setpct .session-type-label{color:#d1a8ff}
+.session-fields{display:flex;flex-direction:column;gap:3px}
+.field-row{display:flex;align-items:center;gap:4px}
+.field-row label{font-size:10px;color:var(--color-text-secondary);min-width:44px;flex-shrink:0}
+.field-row input[type=number]{flex:1;min-width:0;font-size:11px;padding:2px 5px;border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary)}
+.field-row select{flex:1;min-width:0;font-size:11px;padding:2px 5px;border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary)}
+.session-delta{font-size:10px;font-weight:600;text-align:right;margin-top:2px}
+.del-btn{position:absolute;top:4px;right:4px;width:14px;height:14px;border-radius:50%;border:1px solid var(--color-border-secondary);background:transparent;color:var(--color-text-tertiary);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.del-btn:hover{background:var(--color-background-danger);color:var(--color-text-danger)}
+.add-btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;margin-top:auto}
+.add-btn{font-size:10px;padding:3px 4px;border-radius:var(--border-radius-md);border:1px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer}
+.add-btn:hover{background:var(--color-background-secondary);filter:brightness(1.08)}
+.add-btn.charge{border-color:#1D9E75;color:#0F6E56}
+.add-btn.drive{border-color:#E24B4A;color:#993C1D}
+.add-btn.cop{border-color:#BA7517;color:#854F0B}
+.add-btn.idle{border-color:#4ea1ff;color:#79b8ff}
+.add-btn.setpct{border-color:#b47cff;color:#d1a8ff}
+.start-badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:var(--border-radius-md);background:var(--color-background-info);color:var(--color-text-info);font-weight:500;margin-bottom:4px;cursor:pointer;border:1px solid var(--color-border-info)}
+.start-edit{display:flex;align-items:center;gap:4px;margin-bottom:4px}
+.start-edit input[type="range"]{
+  flex:1;
+  min-width:0;
+  accent-color:#79b8ff;
+  cursor:pointer;
+}
+.start-edit button{font-size:10px;padding:2px 5px;border-radius:var(--border-radius-md);border:1px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer}
+.start-val{
+  min-width:34px;
+  font-size:10px;
+  color:var(--color-text-secondary);
+  text-align:right;
+}
+.carry-note{font-size:9px;color:var(--color-text-tertiary);margin-bottom:3px}
+.summary-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.smet{background:linear-gradient(180deg,var(--color-background-secondary),#131f32);border:1px solid var(--color-border-primary);border-radius:var(--border-radius-md);padding:7px 8px;box-shadow:0 4px 14px rgba(0,0,0,0.22)}
+.smet-label{font-size:10px;color:var(--color-text-tertiary);margin-bottom:1px}
+.smet-val{font-size:15px;font-weight:700;color:var(--color-text-primary);line-height:1.1}
+.smet-sub{font-size:10px;color:var(--color-text-secondary);margin-top:1px}
+.sessions::-webkit-scrollbar{width:6px}
+.sessions::-webkit-scrollbar-thumb{background:#314567;border-radius:8px}
+</style>
+
+<div class="app">
+<div class="topbar">
+  <div class="pack-row">
+    <label>Pack size</label>
+    <input type="number" id="packSize" value="80" min="20" max="200" step="1" oninput="onPackSizeInput()">
+    <label>kWh</label>
+  </div>
+  <div class="db-actions">
+    <button class="tiny-btn" id="undoBtn" onclick="undo()" disabled title="Undo">Undo</button>
+    <button class="tiny-btn" id="redoBtn" onclick="redo()" disabled title="Redo">Redo</button>
+    <select id="snapshotSelect" class="snap-select" onchange="onSnapshotSelect()" title="Load weekly snapshot">
+      <option value="">Snapshots</option>
+    </select>
+    <input id="snapshotName" class="snap-input" type="text" placeholder="Name">
+    <button class="tiny-btn" onclick="saveSnapshot()" title="Save current week as a snapshot">Save Snapshot</button>
+    <button class="tiny-btn" onclick="connectJsonDb()">Connect JSON DB</button>
+    <button class="tiny-btn" onclick="downloadJsonDb()">Export JSON</button>
+    <span class="db-status" id="dbStatus">local autosave</span>
+    <span class="soc-warning-pill" id="socWarning" style="display:none"></span>
+  </div>
+  <div class="pack-row" style="margin-left:auto">
+    <label style="font-size:11px;color:var(--color-text-tertiary)">carry-over: end of day flows into next day start</label>
+  </div>
+</div>
+
+<div class="summary-bar" id="summaryBar"></div>
+<div class="week" id="weekCols"></div>
+</div>
+
+<script>
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const IDLE_KW_DRAW = 0.05;
+const SOC_WARNING_PCT = 5;
+
+let week = DAYS.map((name, i) => ({
+  name,
+  manualStart: i === 0 ? 80 : null,
+  sessions: i === 0 ? [
+    {type:'charge', label:'Office AM', kw:3, hrs:2},
+    {type:'drive', label:'Commute', miles:60, wh:200},
+    {type:'cop', label:'Lunch gap', hrs:1, mode:'noac'},
+    {type:'charge', label:'Office PM', kw:3, hrs:3.83},
+    {type:'drive', label:'Home commute', miles:60, wh:200},
+    {type:'charge', label:'Gym', kw:6, hrs:1.5},
+  ] : []
+}));
+
+let editingStart = null;
+let renderQueued = false;
+let clipboard = null;
+let draggedSession = null;
+let currentDropCard = null;
+let fileHandle = null;
+let persistQueued = false;
+let writeInProgress = false;
+let pendingWrite = false;
+const LOCAL_DB_KEY = 'tesla_day_builder_db_v1';
+const LOCAL_SNAPSHOTS_KEY = 'tesla_day_builder_snapshots_v1';
+let undoStack = [];
+let redoStack = [];
+let isApplyingHistory = false;
+let lastHistoryTs = 0;
+const MAX_HISTORY = 200;
+const HISTORY_COALESCE_MS = 250;
+
+function copDraw(mode){ return mode==='on'?1.5:mode==='noac'?0.2:0; }
+function escHtml(v){
+  return String(v ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
+function scheduleRender(){
+  if(renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => {
+    renderQueued = false;
+    render();
+  });
+}
+function onPackSizeInput(){
+  recordHistory(false);
+  scheduleRender();
+}
+function getState(){
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    packSize: +document.getElementById('packSize').value || 80,
+    week: cloneData(week),
+    editingStart,
+    snapshots: cloneData(getSnapshotsStore())
+  };
+}
+
+function getSnapshotsStore(){
+  try{
+    const raw = localStorage.getItem(LOCAL_SNAPSHOTS_KEY);
+    if(!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch(err){
+    return {};
+  }
+}
+
+function setSnapshotsStore(store){
+  try{
+    localStorage.setItem(LOCAL_SNAPSHOTS_KEY, JSON.stringify(store || {}));
+  } catch(err){
+    // ignore storage errors
+  }
+}
+function setDbStatus(msg){
+  const el = document.getElementById('dbStatus');
+  if(el) el.textContent = msg;
+}
+function schedulePersist(){
+  if(persistQueued) return;
+  persistQueued = true;
+  setTimeout(() => {
+    persistQueued = false;
+    persistState();
+  }, 150);
+}
+async function persistState(){
+  const state = getState();
+  localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(state));
+  if(fileHandle){
+    pendingWrite = true;
+    await flushFileWrite();
+  } else {
+    setDbStatus(`local autosave ${new Date().toLocaleTimeString()}`);
+  }
+}
+async function flushFileWrite(){
+  if(!pendingWrite || writeInProgress || !fileHandle) return;
+  writeInProgress = true;
+  pendingWrite = false;
+  try{
+    const writable = await fileHandle.createWritable();
+    await writable.write(JSON.stringify(getState(), null, 2));
+    await writable.close();
+    setDbStatus(`json db synced ${new Date().toLocaleTimeString()}`);
+  } catch(err){
+    fileHandle = null;
+    setDbStatus('json db write failed; local autosave only');
+  } finally {
+    writeInProgress = false;
+    if(pendingWrite) flushFileWrite();
+  }
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LOCAL_DB_KEY);
+    if(!raw) return;
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed.week)) week = parsed.week;
+    enforceSingleSetPoint();
+    if(parsed.snapshots && typeof parsed.snapshots === 'object') setSnapshotsStore(parsed.snapshots);
+    if(typeof parsed.editingStart === 'number' || parsed.editingStart === null) editingStart = parsed.editingStart;
+    const packInput = document.getElementById('packSize');
+    if(packInput && Number.isFinite(parsed.packSize)) packInput.value = String(parsed.packSize);
+  } catch(err){
+    setDbStatus('autosave load failed');
+  }
+}
+async function connectJsonDb(){
+  if(!window.showSaveFilePicker){
+    setDbStatus('file api unavailable; use Export JSON');
+    return;
+  }
+  try{
+    fileHandle = await window.showSaveFilePicker({
+      suggestedName: 'tesla_day_builder_db.json',
+      types: [{ description: 'JSON files', accept: { 'application/json': ['.json'] } }]
+    });
+    pendingWrite = true;
+    await flushFileWrite();
+  } catch(err){
+    setDbStatus('json db not connected');
+  }
+}
+function downloadJsonDb(){
+  const blob = new Blob([JSON.stringify(getState(), null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tesla_day_builder_db.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function cloneData(v){
+  return JSON.parse(JSON.stringify(v));
+}
+function getHistorySnapshot(){
+  const packInput = document.getElementById('packSize');
+  const packSize = packInput ? (+packInput.value || 80) : 80;
+  return {
+    packSize,
+    week: cloneData(week),
+    editingStart
+  };
+}
+function setHistorySnapshot(s){
+  if(!s) return;
+  week = cloneData(s.week);
+  editingStart = s.editingStart ?? null;
+  const packInput = document.getElementById('packSize');
+  if(packInput) packInput.value = String(s.packSize ?? 80);
+  enforceSingleSetPoint();
+}
+function recordHistory(force){
+  if(isApplyingHistory) return;
+  const now = Date.now();
+  if(!force && (now - lastHistoryTs) < HISTORY_COALESCE_MS) return;
+  undoStack.push(getHistorySnapshot());
+  if(undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack = [];
+  lastHistoryTs = now;
+}
+function applyHistorySnapshot(s){
+  isApplyingHistory = true;
+  try{
+    setHistorySnapshot(s);
+  } finally {
+    isApplyingHistory = false;
+  }
+}
+function undo(){
+  if(undoStack.length === 0) return;
+  const current = getHistorySnapshot();
+  const prev = undoStack.pop();
+  redoStack.push(current);
+  lastHistoryTs = 0;
+  applyHistorySnapshot(prev);
+  render();
+}
+function redo(){
+  if(redoStack.length === 0) return;
+  const current = getHistorySnapshot();
+  const next = redoStack.pop();
+  undoStack.push(current);
+  lastHistoryTs = 0;
+  applyHistorySnapshot(next);
+  render();
+}
+function syncUndoRedoButtons(){
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  if(undoBtn) undoBtn.disabled = undoStack.length === 0;
+  if(redoBtn) redoBtn.disabled = redoStack.length === 0;
+}
+
+function refreshSnapshotDropdown(selectedName){
+  const sel = document.getElementById('snapshotSelect');
+  if(!sel) return;
+  const store = getSnapshotsStore();
+  const entries = Object.entries(store)
+    .filter(([, v]) => v && v.data)
+    .sort((a,b) => (b[1].savedAt || '').localeCompare(a[1].savedAt || ''));
+
+  const current = sel.value;
+  sel.innerHTML = '';
+  const optEmpty = document.createElement('option');
+  optEmpty.value = '';
+  optEmpty.textContent = entries.length ? 'Snapshots' : 'No snapshots';
+  sel.appendChild(optEmpty);
+
+  for(const [name, item] of entries){
+    const o = document.createElement('option');
+    const d = item.savedAt ? new Date(item.savedAt) : null;
+    const dateStr = d ? d.toLocaleDateString() : '';
+    const timeStr = d ? d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+    o.value = name;
+    o.textContent = dateStr ? `${name} (${dateStr} ${timeStr})` : name;
+    sel.appendChild(o);
+  }
+
+  const target = selectedName ?? current;
+  if(target && store[target]) sel.value = target;
+}
+
+function saveSnapshot(){
+  const input = document.getElementById('snapshotName');
+  let name = input ? input.value.trim() : '';
+  if(!name){
+    name = `week_${new Date().toISOString().slice(0,10)}`;
+  }
+
+  const store = getSnapshotsStore();
+  if(store[name] && !window.confirm(`Overwrite existing snapshot "${name}"?`)){
+    return;
+  }
+
+  store[name] = {
+    savedAt: new Date().toISOString(),
+    data: getHistorySnapshot()
+  };
+  setSnapshotsStore(store);
+  refreshSnapshotDropdown(name);
+  schedulePersist();
+}
+
+function onSnapshotSelect(){
+  const sel = document.getElementById('snapshotSelect');
+  if(!sel) return;
+  const name = sel.value;
+  if(!name) return;
+
+  const store = getSnapshotsStore();
+  const entry = store[name];
+  if(!entry?.data) return;
+
+  recordHistory(true);
+  applyHistorySnapshot(entry.data);
+  render();
+}
+
+function sessionFieldId(di, si, key){
+  return `session_${di}_${si}_${key}`;
+}
+function hasCopiedDay(){
+  return clipboard?.type === 'day';
+}
+function hasCopiedSession(){
+  return clipboard?.type === 'session';
+}
+function getFreezePoint(){
+  for(let di=0; di<week.length; di++){
+    for(let si=0; si<week[di].sessions.length; si++){
+      if(week[di].sessions[si].type === 'setpct') return {di, si};
+    }
+  }
+  return null;
+}
+function hasSetPoint(){
+  return getFreezePoint() !== null;
+}
+function isBeforeFreeze(di, si, freezePoint){
+  if(!freezePoint) return false;
+  return di < freezePoint.di || (di === freezePoint.di && si < freezePoint.si);
+}
+function isDayBeforeFreeze(di, freezePoint){
+  if(!freezePoint) return false;
+  return di < freezePoint.di;
+}
+function enforceSingleSetPoint(){
+  let seen = false;
+  for(let di=0; di<week.length; di++){
+    week[di].sessions = week[di].sessions.filter(s => {
+      if(s.type !== 'setpct') return true;
+      if(!seen){
+        seen = true;
+        return true;
+      }
+      return false;
+    });
+  }
+}
+function dragSessionStart(event, di, si){
+  const freezePoint = getFreezePoint();
+  if(isBeforeFreeze(di, si, freezePoint)){
+    event.preventDefault();
+    return;
+  }
+  draggedSession = { di, si };
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', `${di}:${si}`);
+}
+function dragSessionEnd(){
+  draggedSession = null;
+  document.querySelectorAll('.sessions.drop-active').forEach(el => el.classList.remove('drop-active'));
+  if(currentDropCard){
+    currentDropCard.classList.remove('drop-slot');
+    currentDropCard = null;
+  }
+}
+function dragOverSessions(event){
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+}
+function dragEnterSessions(event){
+  event.currentTarget.classList.add('drop-active');
+}
+function dragLeaveSessions(event){
+  event.currentTarget.classList.remove('drop-active');
+}
+function dragOverSessionCard(event){
+  event.preventDefault();
+  const el = event.currentTarget;
+  if(el.classList.contains('is-disabled')) return;
+  if(currentDropCard && currentDropCard !== el){
+    currentDropCard.classList.remove('drop-slot');
+  }
+  el.classList.add('drop-slot');
+  currentDropCard = el;
+}
+function dragLeaveSessionCard(event){
+  const el = event.currentTarget;
+  if(el && el.classList.contains('drop-slot')){
+    el.classList.remove('drop-slot');
+  }
+  if(currentDropCard === el) currentDropCard = null;
+}
+function moveSession(fromDi, fromSi, toDi, toSi){
+  if(fromDi === toDi && fromSi === toSi) return;
+  const freezePoint = getFreezePoint();
+  if(isBeforeFreeze(fromDi, fromSi, freezePoint)) return;
+  if(isDayBeforeFreeze(toDi, freezePoint)) return;
+  recordHistory(true);
+  const sourceDay = week[fromDi];
+  const targetDay = week[toDi];
+  if(!sourceDay || !targetDay) return;
+  const [item] = sourceDay.sessions.splice(fromSi, 1);
+  if(!item) return;
+  let insertAt = toSi;
+  if(fromDi === toDi && fromSi < toSi) insertAt = toSi - 1;
+  insertAt = Math.max(0, Math.min(insertAt, targetDay.sessions.length));
+  targetDay.sessions.splice(insertAt, 0, item);
+  render();
+}
+function dropSessionAt(event, toDi, toSi){
+  event.preventDefault();
+  event.stopPropagation();
+  if(currentDropCard){
+    currentDropCard.classList.remove('drop-slot');
+    currentDropCard = null;
+  }
+  const payload = draggedSession || (() => {
+    const raw = event.dataTransfer.getData('text/plain');
+    if(!raw) return null;
+    const [di, si] = raw.split(':').map(n => parseInt(n, 10));
+    if(Number.isNaN(di) || Number.isNaN(si)) return null;
+    return { di, si };
+  })();
+  if(!payload) return;
+  moveSession(payload.di, payload.si, toDi, toSi);
+}
+function dropSessionToDayEnd(event, toDi){
+  event.preventDefault();
+  if(currentDropCard){
+    currentDropCard.classList.remove('drop-slot');
+    currentDropCard = null;
+  }
+  event.currentTarget.classList.remove('drop-active');
+  const payload = draggedSession || (() => {
+    const raw = event.dataTransfer.getData('text/plain');
+    if(!raw) return null;
+    const [di, si] = raw.split(':').map(n => parseInt(n, 10));
+    if(Number.isNaN(di) || Number.isNaN(si)) return null;
+    return { di, si };
+  })();
+  if(!payload) return;
+  moveSession(payload.di, payload.si, toDi, week[toDi].sessions.length);
+}
+
+function calcDay(day, carryPct, dayIndex) {
+  // Monday can be manually anchored; all following days strictly carry over.
+  const start = dayIndex === 0
+    ? (day.manualStart !== null ? day.manualStart : (carryPct ?? 80))
+    : (carryPct ?? 80);
+  let pct = start;
+  const pack = +document.getElementById('packSize').value || 80;
+  const steps = [{label:'Start', pct: Math.round(pct*10)/10, delta:0}];
+  for(const s of day.sessions){
+    let deltaKwh = 0;
+    if(s.type==='charge') deltaKwh = (s.kw||0)*(s.hrs||0);
+    else if(s.type==='drive') deltaKwh = -((s.miles||0)*(s.wh||200))/1000;
+    else if(s.type==='cop') deltaKwh = -(copDraw(s.mode||'off'))*(s.hrs||0);
+    else if(s.type==='idle') deltaKwh = -(IDLE_KW_DRAW)*(s.hrs||0);
+    if(s.type==='setpct'){
+      const nextPct = Math.max(0, Math.min(100, parseFloat(s.pct) || 0));
+      const deltaPct = nextPct - pct;
+      deltaKwh = (deltaPct / 100) * pack;
+      pct = nextPct;
+      steps.push({label:s.label||s.type, pct:Math.round(pct*10)/10, delta:Math.round(deltaPct*10)/10, deltaKwh:Math.round(deltaKwh*10)/10});
+      continue;
+    }
+    const deltaPct = (deltaKwh/pack)*100;
+    pct = Math.max(0, Math.min(100, pct+deltaPct));
+    steps.push({label:s.label||s.type, pct:Math.round(pct*10)/10, delta:Math.round(deltaPct*10)/10, deltaKwh:Math.round(deltaKwh*10)/10});
+  }
+  return {start, end: pct, steps};
+}
+
+function battColor(p){ return p>=50?'#1D9E75':p>=20?'#BA7517':'#E24B4A'; }
+
+function render(){
+  const activeEl = document.activeElement;
+  const activeId = activeEl?.id || null;
+  const canTrackSelection = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+  const selectionStart = canTrackSelection ? activeEl.selectionStart : null;
+  const selectionEnd = canTrackSelection ? activeEl.selectionEnd : null;
+
+  syncUndoRedoButtons();
+  const socWarningEl = document.getElementById('socWarning');
+  let socLowCount = 0;
+  let firstSocLow = null;
+
+  const pack = +document.getElementById('packSize').value || 80;
+  let carryPct = null;
+  const results = week.map((day, idx) => {
+    const r = calcDay(day, carryPct, idx);
+    carryPct = r.end;
+    return r;
+  });
+
+  const totalGain = results.reduce((a,r,i)=>a+r.steps.filter((_,j)=>j>0&&week[i].sessions[j-1]?.type==='charge').reduce((b,s)=>b+(s.deltaKwh||0),0),0);
+  const totalDrive = results.reduce((a,r,i)=>a+r.steps.filter((_,j)=>j>0&&week[i].sessions[j-1]?.type==='drive').reduce((b,s)=>b+Math.abs(s.deltaKwh||0),0),0);
+  const startPct = results[0].start;
+  const endPct = results[results.length-1].end;
+  document.getElementById('summaryBar').innerHTML = `
+    <div class="smet"><div class="smet-label">Week start</div><div class="smet-val" style="color:${battColor(startPct)}">${Math.round(startPct)}%</div><div class="smet-sub">${Math.round(startPct*pack/100)} kWh</div></div>
+    <div class="smet"><div class="smet-label">Week end</div><div class="smet-val" style="color:${battColor(endPct)}">${Math.round(endPct)}%</div><div class="smet-sub">${Math.round(endPct*pack/100)} kWh</div></div>
+    <div class="smet"><div class="smet-label">Total charged</div><div class="smet-val" style="color:#1D9E75">+${Math.round(totalGain*10)/10}</div><div class="smet-sub">kWh gained</div></div>
+    <div class="smet"><div class="smet-label">Total driven</div><div class="smet-val" style="color:#E24B4A">${Math.round(totalDrive*10)/10}</div><div class="smet-sub">kWh from driving</div></div>
+  `;
+
+  const cols = document.getElementById('weekCols');
+  cols.innerHTML = '';
+  const freezePoint = getFreezePoint();
+
+  week.forEach((day, di) => {
+    const r = results[di];
+    const col = document.createElement('div');
+    col.className = `day-col${isDayBeforeFreeze(di, freezePoint) ? ' is-disabled' : ''}`;
+
+    const startPctVal = r.start;
+
+    let startHTML = '';
+    if(editingStart === di && di === 0 && !freezePoint){
+      startHTML = `<div class="start-edit">
+        <input type="range" id="startInput_${di}" value="${Math.round(startPctVal)}" min="0" max="100" step="1" oninput="updateStartPreview(${di}, this.value)">
+        <span class="start-val" id="startVal_${di}">${Math.round(startPctVal)}%</span>
+        <button onclick="confirmStart(${di})">Set</button>
+        <button onclick="clearStart(${di})">Carry</button>
+      </div>`;
+    } else {
+      if(day.manualStart !== null && di === 0){
+        const locked = freezePoint ? ' (locked)' : '';
+        startHTML = `<div class="start-badge" onclick="editStart(${di})">Start: ${Math.round(day.manualStart)}%${locked}</div>`;
+      } else {
+        startHTML = `<div class="carry-note">Carries from prev: ${Math.round(startPctVal)}%</div>`;
+      }
+    }
+
+    const endColor = battColor(r.end);
+    const barW = Math.max(0,Math.min(100,r.end));
+    let sessionsHTML = '';
+    day.sessions.forEach((s, si) => {
+      const locked = isBeforeFreeze(di, si, freezePoint);
+      const disabledAttr = locked ? 'disabled' : '';
+      const step = r.steps[si+1];
+      const socLow = typeof step?.pct === 'number' && step.pct < SOC_WARNING_PCT;
+      if(socLow){
+        socLowCount++;
+        if(!firstSocLow){
+          firstSocLow = { dayName: day.name, label: s.label || s.type, pct: step.pct };
+        }
+      }
+      const deltaColor = step.delta >= 0 ? '#1D9E75' : '#E24B4A';
+      let fields = '';
+      if(s.type==='charge'){
+        fields = `
+          <div class="field-row"><label>Speed</label><input id="${sessionFieldId(di,si,'kw')}" type="number" value="${s.kw}" min="0.5" max="50" step="0.5" oninput="updateSession(${di},${si},'kw',this.value)" ${disabledAttr}> kW</div>
+          <div class="field-row"><label>Duration</label><input id="${sessionFieldId(di,si,'hrs')}" type="number" value="${s.hrs}" min="0.25" max="24" step="0.25" oninput="updateSession(${di},${si},'hrs',this.value)" ${disabledAttr}> hrs</div>`;
+      } else if(s.type==='drive'){
+        fields = `
+          <div class="field-row"><label>Miles</label><input id="${sessionFieldId(di,si,'miles')}" type="number" value="${s.miles}" min="1" max="500" step="1" oninput="updateSession(${di},${si},'miles',this.value)" ${disabledAttr}></div>
+          <div class="field-row"><label>Wh/mile</label><input id="${sessionFieldId(di,si,'wh')}" type="number" value="${s.wh}" min="100" max="600" step="10" oninput="updateSession(${di},${si},'wh',this.value)" ${disabledAttr}></div>`;
+      } else if(s.type==='cop'){
+        fields = `
+          <div class="field-row"><label>Duration</label><input id="${sessionFieldId(di,si,'hrs')}" type="number" value="${s.hrs}" min="0.25" max="24" step="0.25" oninput="updateSession(${di},${si},'hrs',this.value)" ${disabledAttr}> hrs</div>
+          <div class="field-row"><label>Mode</label><select id="${sessionFieldId(di,si,'mode')}" onchange="updateSession(${di},${si},'mode',this.value)" ${disabledAttr}>
+            <option value="on" ${s.mode==='on'?'selected':''}>On (A/C)</option>
+            <option value="noac" ${s.mode==='noac'?'selected':''}>No A/C</option>
+            <option value="off" ${s.mode==='off'?'selected':''}>Off</option>
+          </select></div>`;
+      } else if(s.type==='idle'){
+        fields = `<div class="field-row"><label>Duration</label><input id="${sessionFieldId(di,si,'hrs')}" type="number" value="${s.hrs||1}" min="0.25" max="24" step="0.25" oninput="updateSession(${di},${si},'hrs',this.value)" ${disabledAttr}> hrs</div>`;
+      } else if(s.type==='setpct'){
+        fields = `<div class="field-row"><label>Set %</label><input id="${sessionFieldId(di,si,'pct')}" type="number" value="${s.pct ?? 80}" min="0" max="100" step="1" oninput="updateSession(${di},${si},'pct',this.value)" ${disabledAttr}> %</div>`;
+      }
+
+      const typeLabels = {charge:'Charging',drive:'Drive',cop:'COP',idle:'Idle',setpct:'Set Battery %'};
+      const sign = step.delta >= 0 ? '+' : '';
+      sessionsHTML += `
+        <div class="session-card type-${s.type}${locked ? ' is-disabled' : ''}${socLow ? ' soc-low' : ''}" draggable="${locked ? 'false' : 'true'}" ondragstart="dragSessionStart(event,${di},${si})" ondragend="dragSessionEnd()" ondragover="dragOverSessionCard(event)" ondragleave="dragLeaveSessionCard(event)" ondrop="dropSessionAt(event,${di},${si})">
+          <button class="del-btn" aria-label="Delete session" title="Delete session" onclick="removeSession(${di},${si})" ${disabledAttr}>x</button>
+          <div class="session-type-label">${typeLabels[s.type]}</div>
+          <div class="field-row" style="justify-content:flex-end;margin-bottom:2px">
+            <button class="tiny-btn" onclick="copySession(${di},${si})" title="Copy this session" ${disabledAttr}>Copy</button>
+            <button class="tiny-btn" onclick="pasteSessionAfter(${di},${si})" title="Paste session after this one" ${(hasCopiedSession() && !locked) ? '' : 'disabled'}>Paste</button>
+          </div>
+          <div class="field-row" style="margin-bottom:4px"><label>Label</label><input id="${sessionFieldId(di,si,'label')}" type="text" value="${escHtml(s.label||'')}" style="flex:1;min-width:0;font-size:11px;padding:3px 6px;border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary)" oninput="updateSession(${di},${si},'label',this.value)" ${disabledAttr}></div>
+          <div class="session-fields">${fields}</div>
+          <div class="session-delta" style="color:${deltaColor}">${sign}${step.delta}% (${sign}${step.deltaKwh} kWh)</div>
+          <div style="margin-top:4px;font-size:10px;color:var(--color-text-tertiary)">After: ${step.pct}%</div>
+        </div>`;
+    });
+
+    col.innerHTML = `
+      <div class="day-header">
+        <span class="day-name">${day.name}</span>
+        <div class="day-header-actions">
+          <button class="tiny-btn" onclick="copyDay(${di})" title="Copy full day block" ${isDayBeforeFreeze(di, freezePoint) ? 'disabled' : ''}>Copy</button>
+          <button class="tiny-btn" onclick="pasteDay(${di})" title="Paste full day block into this day" ${(hasCopiedDay() && !isDayBeforeFreeze(di, freezePoint)) ? '' : 'disabled'}>Paste</button>
+          <span class="day-summary" style="color:${endColor}">${Math.round(r.end)}%</span>
+        </div>
+      </div>
+      ${startHTML}
+      <div class="batt-bar"><div class="batt-fill" style="width:${barW}%;background:${endColor}"></div></div>
+      <div class="batt-pcts"><span>${Math.round(r.start)}%</span><span>${Math.round(r.end)}%</span></div>
+      <div class="sessions" ondragover="dragOverSessions(event)" ondragenter="dragEnterSessions(event)" ondragleave="dragLeaveSessions(event)" ondrop="dropSessionToDayEnd(event,${di})">${sessionsHTML}</div>
+      <div class="add-btns">
+        <button class="add-btn charge" onclick="addSession(${di},'charge')" ${isDayBeforeFreeze(di, freezePoint) ? 'disabled' : ''}>+ charge</button>
+        <button class="add-btn drive" onclick="addSession(${di},'drive')" ${isDayBeforeFreeze(di, freezePoint) ? 'disabled' : ''}>+ drive</button>
+        <button class="add-btn cop" onclick="addSession(${di},'cop')" ${isDayBeforeFreeze(di, freezePoint) ? 'disabled' : ''}>+ COP</button>
+        <button class="add-btn idle" onclick="addSession(${di},'idle')" ${isDayBeforeFreeze(di, freezePoint) ? 'disabled' : ''}>+ idle</button>
+        <button class="add-btn setpct" onclick="addSession(${di},'setpct')" ${(isDayBeforeFreeze(di, freezePoint) || hasSetPoint()) ? 'disabled' : ''}>+ set %</button>
+      </div>
+    `;
+    cols.appendChild(col);
+
+    if(editingStart === di){
+      setTimeout(()=>{
+        const inp = document.getElementById('startInput_'+di);
+        if(inp) inp.focus();
+      },10);
+    }
+  });
+
+  if(activeId){
+    const nextActive = document.getElementById(activeId);
+    if(nextActive){
+      nextActive.focus();
+      if(selectionStart !== null && selectionEnd !== null && typeof nextActive.setSelectionRange === 'function'){
+        nextActive.setSelectionRange(selectionStart, selectionEnd);
+      }
+    }
+  }
+
+  if(socWarningEl){
+    if(socLowCount > 0 && firstSocLow){
+      const pctText = typeof firstSocLow.pct === 'number' ? Math.round(firstSocLow.pct*10)/10 : '?';
+      socWarningEl.style.display = 'inline-flex';
+      socWarningEl.textContent = `Warning: SoC below ${SOC_WARNING_PCT}% (e.g. ${firstSocLow.dayName} · ${firstSocLow.label} → ${pctText}%)`;
+    } else {
+      socWarningEl.style.display = 'none';
+      socWarningEl.textContent = '';
+    }
+  }
+  schedulePersist();
+}
+
+function updateSession(di, si, key, val){
+  recordHistory(false);
+  if(key==='kw'||key==='hrs'||key==='miles'||key==='wh'||key==='pct') week[di].sessions[si][key] = parseFloat(val)||0;
+  else week[di].sessions[si][key] = val;
+  scheduleRender();
+}
+
+function addSession(di, type){
+  const freezePoint = getFreezePoint();
+  if(isDayBeforeFreeze(di, freezePoint)) return;
+  if(type === 'setpct' && hasSetPoint()) return;
+  recordHistory(true);
+  const defaults = {
+    charge:{type:'charge',label:'Charge session',kw:7,hrs:1},
+    drive:{type:'drive',label:'Drive',miles:30,wh:200},
+    cop:{type:'cop',label:'COP',hrs:1,mode:'noac'},
+    idle:{type:'idle',label:'Idle',hrs:1},
+    setpct:{type:'setpct',label:'Set battery',pct:80}
+  };
+  week[di].sessions.push({...defaults[type]});
+  render();
+}
+function copySession(di, si){
+  clipboard = { type:'session', session: cloneData(week[di].sessions[si]) };
+  render();
+}
+function pasteSessionAfter(di, si){
+  const freezePoint = getFreezePoint();
+  if(isBeforeFreeze(di, si, freezePoint)) return;
+  if(!hasCopiedSession()) return;
+  if(clipboard.session?.type === 'setpct' && hasSetPoint()) return;
+  recordHistory(true);
+  week[di].sessions.splice(si+1, 0, cloneData(clipboard.session));
+  enforceSingleSetPoint();
+  render();
+}
+function copyDay(di){
+  clipboard = {
+    type:'day',
+    day: {
+      manualStart: week[di].manualStart,
+      sessions: cloneData(week[di].sessions)
+    }
+  };
+  render();
+}
+function pasteDay(di){
+  const freezePoint = getFreezePoint();
+  if(isDayBeforeFreeze(di, freezePoint)) return;
+  if(!hasCopiedDay()) return;
+  recordHistory(true);
+  week[di].manualStart = clipboard.day.manualStart;
+  week[di].sessions = cloneData(clipboard.day.sessions);
+  enforceSingleSetPoint();
+  render();
+}
+
+function removeSession(di, si){
+  const freezePoint = getFreezePoint();
+  if(isBeforeFreeze(di, si, freezePoint)) return;
+  recordHistory(true);
+  week[di].sessions.splice(si,1);
+  render();
+}
+
+function editStart(di){
+  if(hasSetPoint()) return;
+  if(di !== 0) return;
+  editingStart = di;
+  render();
+}
+
+function confirmStart(di){
+  recordHistory(true);
+  const inp = document.getElementById('startInput_'+di);
+  if(inp){
+    const v = parseFloat(inp.value);
+    if(!isNaN(v)) week[di].manualStart = Math.max(0,Math.min(100,v));
+  }
+  editingStart = null;
+  render();
+}
+function updateStartPreview(di, value){
+  const v = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+  const label = document.getElementById('startVal_'+di);
+  if(label) label.textContent = `${v}%`;
+}
+
+function clearStart(di){
+  recordHistory(true);
+  week[di].manualStart = null;
+  editingStart = null;
+  render();
+}
+
+loadState();
+refreshSnapshotDropdown();
+render();
+</script>
