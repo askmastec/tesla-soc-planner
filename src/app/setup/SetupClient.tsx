@@ -144,7 +144,7 @@ export function SetupClient({ baseUrl }: { baseUrl: string }) {
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
             <Label>Vehicle</Label>
-            <Select value={vin} onValueChange={setVin}>
+            <Select value={vin} onValueChange={(value) => setVin(value ?? "")}>
               <SelectTrigger className="bg-black/30 border-white/10">
                 <SelectValue placeholder="Select VIN" />
               </SelectTrigger>
