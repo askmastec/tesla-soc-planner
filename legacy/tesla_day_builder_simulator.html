@@ -194,7 +194,7 @@ body{
   text-align:right;
 }
 .carry-note{font-size:9px;color:var(--color-text-tertiary);margin-bottom:3px}
-.summary-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.summary-bar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 .smet{background:linear-gradient(180deg,var(--color-background-secondary),#131f32);border:1px solid var(--color-border-primary);border-radius:var(--border-radius-md);padding:7px 8px;box-shadow:0 4px 14px rgba(0,0,0,0.22)}
 .smet-label{font-size:10px;color:var(--color-text-tertiary);margin-bottom:1px}
 .smet-val{font-size:15px;font-weight:700;color:var(--color-text-primary);line-height:1.1}
@@ -209,6 +209,11 @@ body{
     <label>Pack size</label>
     <input type="number" id="packSize" value="80" min="20" max="200" step="1" oninput="onPackSizeInput()">
     <label>kWh</label>
+  </div>
+  <div class="pack-row">
+    <label>Projected</label>
+    <input type="number" id="projectedWhMi" value="250" min="100" max="700" step="5" oninput="onProjectedWhInput()">
+    <label>Wh/mile</label>
   </div>
   <div class="db-actions">
     <button class="tiny-btn" id="undoBtn" onclick="undo()" disabled title="Undo">Undo</button>
@@ -289,11 +294,16 @@ function onPackSizeInput(){
   recordHistory(false);
   scheduleRender();
 }
+function onProjectedWhInput(){
+  recordHistory(false);
+  scheduleRender();
+}
 function getState(){
   return {
     version: 1,
     savedAt: new Date().toISOString(),
     packSize: +document.getElementById('packSize').value || 80,
+    projectedWhMi: +document.getElementById('projectedWhMi').value || 250,
     week: cloneData(week),
     editingStart,
     snapshots: cloneData(getSnapshotsStore())
@@ -368,6 +378,8 @@ function loadState(){
     if(typeof parsed.editingStart === 'number' || parsed.editingStart === null) editingStart = parsed.editingStart;
     const packInput = document.getElementById('packSize');
     if(packInput && Number.isFinite(parsed.packSize)) packInput.value = String(parsed.packSize);
+    const projectedWhInput = document.getElementById('projectedWhMi');
+    if(projectedWhInput && Number.isFinite(parsed.projectedWhMi)) projectedWhInput.value = String(parsed.projectedWhMi);
   } catch(err){
     setDbStatus('autosave load failed');
   }
@@ -403,8 +415,11 @@ function cloneData(v){
 function getHistorySnapshot(){
   const packInput = document.getElementById('packSize');
   const packSize = packInput ? (+packInput.value || 80) : 80;
+  const projectedWhInput = document.getElementById('projectedWhMi');
+  const projectedWhMi = projectedWhInput ? (+projectedWhInput.value || 250) : 250;
   return {
     packSize,
+    projectedWhMi,
     week: cloneData(week),
     editingStart
   };
@@ -415,6 +430,8 @@ function setHistorySnapshot(s){
   editingStart = s.editingStart ?? null;
   const packInput = document.getElementById('packSize');
   if(packInput) packInput.value = String(s.packSize ?? 80);
+  const projectedWhInput = document.getElementById('projectedWhMi');
+  if(projectedWhInput) projectedWhInput.value = String(s.projectedWhMi ?? 250);
   enforceSingleSetPoint();
 }
 function recordHistory(force){
@@ -717,11 +734,15 @@ function render(){
   const totalDrive = results.reduce((a,r,i)=>a+r.steps.filter((_,j)=>j>0&&week[i].sessions[j-1]?.type==='drive').reduce((b,s)=>b+Math.abs(s.deltaKwh||0),0),0);
   const startPct = results[0].start;
   const endPct = results[results.length-1].end;
+  const projectedWhMi = +document.getElementById('projectedWhMi').value || 250;
+  const endKwh = (endPct * pack) / 100;
+  const endRangeMiles = projectedWhMi > 0 ? (endKwh * 1000) / projectedWhMi : 0;
   document.getElementById('summaryBar').innerHTML = `
     <div class="smet"><div class="smet-label">Week start</div><div class="smet-val" style="color:${battColor(startPct)}">${Math.round(startPct)}%</div><div class="smet-sub">${Math.round(startPct*pack/100)} kWh</div></div>
     <div class="smet"><div class="smet-label">Week end</div><div class="smet-val" style="color:${battColor(endPct)}">${Math.round(endPct)}%</div><div class="smet-sub">${Math.round(endPct*pack/100)} kWh</div></div>
     <div class="smet"><div class="smet-label">Total charged</div><div class="smet-val" style="color:#1D9E75">+${Math.round(totalGain*10)/10}</div><div class="smet-sub">kWh gained</div></div>
     <div class="smet"><div class="smet-label">Total driven</div><div class="smet-val" style="color:#E24B4A">${Math.round(totalDrive*10)/10}</div><div class="smet-sub">kWh from driving</div></div>
+    <div class="smet"><div class="smet-label">Avail range (end)</div><div class="smet-val" style="color:#79b8ff">${Math.round(endRangeMiles)}</div><div class="smet-sub">miles @ ${Math.round(projectedWhMi)} Wh/mi</div></div>
   `;
 
   const cols = document.getElementById('weekCols');
